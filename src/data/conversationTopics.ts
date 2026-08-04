@@ -1,0 +1,145 @@
+import type { ConversationTopic } from "@/lib/types";
+
+export const conversationTopics: ConversationTopic[] = [
+  {
+    id: "di-toko",
+    title: "Di Toko",
+    arabicTitle: "في المتجر",
+    hint: "Pembeli & penjual — beli barang sederhana",
+    level: "pemula",
+    roles: [
+      { id: "penjual", label: "Penjual", arabicLabel: "البَائِع" },
+      { id: "pembeli", label: "Pembeli", arabicLabel: "الزَّبُون" },
+    ],
+    lines: [
+      { id: "l1", roleId: "pembeli", arabic: "السَّلَامُ عَلَيْكُمْ، هَلْ عِنْدَكَ تُفَّاحٌ؟", translation: "Assalamu'alaikum, apakah Anda punya apel?" },
+      { id: "l2", roleId: "penjual", arabic: "وَعَلَيْكُمُ السَّلَامُ، نَعَمْ، عِنْدِي تُفَّاحٌ طَازَجٌ.", translation: "Wa'alaikumsalam, ya, saya punya apel segar." },
+      { id: "l3", roleId: "pembeli", arabic: "كَمِ الْكِيلُو مِنْ فَضْلِكَ؟", translation: "Berapa harga per kilonya?" },
+      { id: "l4", roleId: "penjual", arabic: "خَمْسَةُ آلَافِ رُوبِيَّةٍ لِلْكِيلُو.", translation: "Lima ribu rupiah per kilo." },
+      { id: "l5", roleId: "pembeli", arabic: "أُرِيدُ كِيلُوَيْنِ مِنْ فَضْلِكَ.", translation: "Saya mau dua kilo, tolong." },
+      { id: "l6", roleId: "penjual", arabic: "تَفَضَّلْ، شُكْرًا لِزِيَارَتِكَ.", translation: "Ini silakan, terima kasih sudah berbelanja." },
+    ],
+  },
+  {
+    id: "perkenalan",
+    title: "Perkenalan",
+    arabicTitle: "التعارف",
+    hint: "Dua teman baru saling kenalan",
+    level: "pemula",
+    roles: [
+      { id: "a", label: "Ali", arabicLabel: "عَلِيّ" },
+      { id: "b", label: "Umar", arabicLabel: "عُمَر" },
+    ],
+    lines: [
+      { id: "l1", roleId: "a", arabic: "مَرْحَبًا، مَا اسْمُكَ؟", translation: "Halo, siapa namamu?" },
+      { id: "l2", roleId: "b", arabic: "اسْمِي عُمَرُ، وَأَنْتَ؟", translation: "Namaku Umar, kalau kamu?" },
+      { id: "l3", roleId: "a", arabic: "اسْمِي عَلِيٌّ، تَشَرَّفْنَا.", translation: "Namaku Ali, senang berkenalan." },
+      { id: "l4", roleId: "b", arabic: "مِنْ أَيْنَ أَنْتَ؟", translation: "Kamu dari mana?" },
+      { id: "l5", roleId: "a", arabic: "أَنَا مِنْ سُورَابَايَا.", translation: "Saya dari Surabaya." },
+    ],
+  },
+  {
+    id: "obrolan-keluarga",
+    title: "Obrolan Keluarga",
+    arabicTitle: "حوار عائلي",
+    hint: "Ayah/ibu & anak ngobrol ringan",
+    level: "pemula",
+    roles: [
+      { id: "ibu", label: "Ibu", arabicLabel: "الأُمّ" },
+      { id: "anak", label: "Anak", arabicLabel: "الابْن" },
+    ],
+    lines: [
+      { id: "l1", roleId: "ibu", arabic: "هَلْ أَنْهَيْتَ وَاجِبَكَ؟", translation: "Apakah kamu sudah selesai mengerjakan PR?" },
+      { id: "l2", roleId: "anak", arabic: "نَعَمْ يَا أُمِّي، أَنْهَيْتُهُ.", translation: "Sudah, Bu, sudah selesai." },
+      { id: "l3", roleId: "ibu", arabic: "أَحْسَنْتَ، اذْهَبْ وَاغْسِلْ يَدَيْكَ لِلْعَشَاءِ.", translation: "Bagus, sekarang cuci tangan untuk makan malam." },
+      { id: "l4", roleId: "anak", arabic: "حَاضِرٌ يَا أُمِّي!", translation: "Baik, Bu!" },
+    ],
+  },
+  {
+    id: "tanya-arah",
+    title: "Tanya Arah",
+    arabicTitle: "السؤال عن الطريق",
+    hint: "Turis tanya arah ke warga lokal",
+    level: "menengah",
+    roles: [
+      { id: "turis", label: "Turis", arabicLabel: "السَّائِح" },
+      { id: "warga", label: "Warga", arabicLabel: "السَّاكِن" },
+    ],
+    lines: [
+      { id: "l1", roleId: "turis", arabic: "عَفْوًا، أَيْنَ الْمَسْجِدُ مِنْ فَضْلِكَ؟", translation: "Maaf, di mana masjidnya, tolong?" },
+      { id: "l2", roleId: "warga", arabic: "امْشِ إِلَى الْأَمَامِ ثُمَّ اتَّجِهْ يَمِينًا.", translation: "Jalan lurus lalu belok kanan." },
+      { id: "l3", roleId: "turis", arabic: "هَلْ هُوَ بَعِيدٌ مِنْ هُنَا؟", translation: "Apakah jauh dari sini?" },
+      { id: "l4", roleId: "warga", arabic: "لَا، هُوَ قَرِيبٌ، خَمْسُ دَقَائِقَ فَقَطْ.", translation: "Tidak, dekat kok, hanya lima menit." },
+      { id: "l5", roleId: "turis", arabic: "شُكْرًا جَزِيلًا لَكَ.", translation: "Terima kasih banyak." },
+    ],
+  },
+  {
+    id: "di-sekolah",
+    title: "Di Sekolah",
+    arabicTitle: "في المدرسة",
+    hint: "Guru & murid bicara pelajaran",
+    level: "pemula",
+    roles: [
+      { id: "guru", label: "Guru", arabicLabel: "المُعَلِّم" },
+      { id: "murid", label: "Murid", arabicLabel: "الطَّالِب" },
+    ],
+    lines: [
+      { id: "l1", roleId: "guru", arabic: "هَلْ فَهِمْتَ الدَّرْسَ؟", translation: "Apakah kamu paham pelajarannya?" },
+      { id: "l2", roleId: "murid", arabic: "نَعَمْ يَا أُسْتَاذُ، فَهِمْتُهُ جَيِّدًا.", translation: "Ya, Pak, saya paham dengan baik." },
+      { id: "l3", roleId: "guru", arabic: "جَيِّدٌ جِدًّا، هَلْ عِنْدَكَ سُؤَالٌ؟", translation: "Bagus sekali, ada pertanyaan?" },
+      { id: "l4", roleId: "murid", arabic: "لَا، لَيْسَ عِنْدِي سُؤَالٌ الْآنَ.", translation: "Tidak, saat ini tidak ada pertanyaan." },
+    ],
+  },
+  {
+    id: "naik-taksi",
+    title: "Naik Taksi",
+    arabicTitle: "في سيارة الأجرة",
+    hint: "Penumpang & sopir taksi",
+    level: "menengah",
+    roles: [
+      { id: "penumpang", label: "Penumpang", arabicLabel: "الرَّاكِب" },
+      { id: "sopir", label: "Sopir", arabicLabel: "السَّائِق" },
+    ],
+    lines: [
+      { id: "l1", roleId: "penumpang", arabic: "إِلَى الْمَطَارِ مِنْ فَضْلِكَ.", translation: "Ke bandara, tolong." },
+      { id: "l2", roleId: "sopir", arabic: "حَاضِرٌ، اِرْبِطْ حِزَامَ الْأَمَانِ.", translation: "Baik, pasang sabuk pengaman ya." },
+      { id: "l3", roleId: "penumpang", arabic: "كَمِ الْوَقْتُ الَّذِي نَحْتَاجُهُ؟", translation: "Berapa lama waktu yang kita butuhkan?" },
+      { id: "l4", roleId: "sopir", arabic: "حَوَالَيْ عِشْرِينَ دَقِيقَةً.", translation: "Sekitar dua puluh menit." },
+    ],
+  },
+  {
+    id: "telepon-teman",
+    title: "Telepon Teman",
+    arabicTitle: "مكالمة هاتفية",
+    hint: "Mengundang teman bermain",
+    level: "pemula",
+    roles: [
+      { id: "a", label: "Fatimah", arabicLabel: "فَاطِمَة" },
+      { id: "b", label: "Aisyah", arabicLabel: "عَائِشَة" },
+    ],
+    lines: [
+      { id: "l1", roleId: "a", arabic: "أَلُو، هَلْ أَنْتِ مُتَفَرِّغَةٌ الْيَوْمَ؟", translation: "Halo, apakah kamu sedang senggang hari ini?" },
+      { id: "l2", roleId: "b", arabic: "نَعَمْ، أَنَا مُتَفَرِّغَةٌ بَعْدَ الظُّهْرِ.", translation: "Ya, saya senggang setelah siang." },
+      { id: "l3", roleId: "a", arabic: "هَلْ تُحِبِّينَ أَنْ تَأْتِي إِلَى بَيْتِي؟", translation: "Mau tidak datang ke rumahku?" },
+      { id: "l4", roleId: "b", arabic: "بِكُلِّ سُرُورٍ، أَرَاكِ لَاحِقًا.", translation: "Dengan senang hati, sampai nanti." },
+    ],
+  },
+  {
+    id: "di-restoran",
+    title: "Di Restoran",
+    arabicTitle: "في المطعم",
+    hint: "Pesan makanan sederhana",
+    level: "menengah",
+    roles: [
+      { id: "pelayan", label: "Pelayan", arabicLabel: "النَّادِل" },
+      { id: "tamu", label: "Tamu", arabicLabel: "الضَّيْف" },
+    ],
+    lines: [
+      { id: "l1", roleId: "pelayan", arabic: "أَهْلًا بِكَ، مَاذَا تُرِيدُ أَنْ تَطْلُبَ؟", translation: "Selamat datang, mau pesan apa?" },
+      { id: "l2", roleId: "tamu", arabic: "أُرِيدُ طَبَقًا مِنَ الْأَرُزِّ وَالدَّجَاجِ.", translation: "Saya mau seporsi nasi dan ayam." },
+      { id: "l3", roleId: "pelayan", arabic: "هَلْ تُرِيدُ شَيْئًا لِلشُّرْبِ؟", translation: "Mau minum apa?" },
+      { id: "l4", roleId: "tamu", arabic: "عَصِيرُ بُرْتُقَالٍ مِنْ فَضْلِكَ.", translation: "Jus jeruk saja, tolong." },
+      { id: "l5", roleId: "pelayan", arabic: "حَاضِرٌ، سَيَصِلُ طَلَبُكَ قَرِيبًا.", translation: "Baik, pesanan Anda akan segera datang." },
+    ],
+  },
+];
