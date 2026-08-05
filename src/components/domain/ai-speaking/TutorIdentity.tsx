@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-
-export const TUTOR_NAME = "Lisan";
+import { TUTOR_NAME } from "@/prompts/persona";
 
 interface TutorIdentityProps {
   size?: "lg" | "sm";

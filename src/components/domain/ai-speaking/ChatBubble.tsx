@@ -3,22 +3,27 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import type { ChatMessage } from "@/types/conversation";
+import type { ChatMessage, ScenarioCategory } from "@/types/conversation";
 import { cn } from "@/lib/utils";
-import { TUTOR_NAME } from "./TutorIdentity";
+import { TUTOR_NAME } from "@/prompts/persona";
+import { SaveExpressionButton } from "@/features/expressions/SaveExpressionButton";
+import { EvaluationCard } from "./EvaluationCard";
 
 interface ChatBubbleProps {
   message: ChatMessage;
+  scenarioId: ScenarioCategory;
   isSpeaking: boolean;
   onReplay: (id: string) => void;
   onRetry?: () => void;
+  /** Hides retry/replay-TTS controls for reopened, read-only history transcripts (features/history/HistoryTranscriptView.tsx). Copy and the evaluation card still work — there's nothing "live" about them. */
+  readOnly?: boolean;
 }
 
 function formatTime(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function ChatBubble({ message, isSpeaking, onReplay, onRetry }: ChatBubbleProps) {
+export function ChatBubble({ message, scenarioId, isSpeaking, onReplay, onRetry, readOnly }: ChatBubbleProps) {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
 
@@ -70,7 +75,7 @@ export function ChatBubble({ message, isSpeaking, onReplay, onRetry }: ChatBubbl
         <div className="flex items-center gap-2 px-1">
           <span className="text-[10px] text-muted-foreground">{formatTime(message.timestamp)}</span>
 
-          {message.failed && onRetry && (
+          {message.failed && onRetry && !readOnly && (
             <Button
               variant="ghost"
               size="sm"
@@ -89,16 +94,18 @@ export function ChatBubble({ message, isSpeaking, onReplay, onRetry }: ChatBubbl
 
           {!isUser && message.text && (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-1.5 text-[11px] text-muted-foreground"
-                onClick={() => onReplay(message.id)}
-                disabled={isSpeaking}
-                aria-label="Putar ulang suara tutor"
-              >
-                <Volume2 className="h-3 w-3" /> {isSpeaking ? "Bicara..." : "Putar ulang"}
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-[11px] text-muted-foreground"
+                  onClick={() => onReplay(message.id)}
+                  disabled={isSpeaking}
+                  aria-label="Putar ulang suara tutor"
+                >
+                  <Volume2 className="h-3 w-3" /> {isSpeaking ? "Bicara..." : "Putar ulang"}
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -109,9 +116,14 @@ export function ChatBubble({ message, isSpeaking, onReplay, onRetry }: ChatBubbl
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                 {copied ? "Tersalin" : "Salin"}
               </Button>
+              <SaveExpressionButton arabic={message.text} translation={message.translation} scenarioId={scenarioId} />
             </>
           )}
         </div>
+
+        {isUser && message.evaluation && (
+          <EvaluationCard evaluation={message.evaluation} example={message.text} scenarioId={scenarioId} />
+        )}
       </div>
     </motion.div>
   );

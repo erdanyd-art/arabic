@@ -1,4 +1,14 @@
-import { BookA, MessageCircle, MessagesSquare, BookOpen, Compass, MapPin, Sparkles, type LucideIcon } from "lucide-react";
+import {
+  BookA,
+  MessageCircle,
+  MessagesSquare,
+  BookOpen,
+  Compass,
+  MapPin,
+  NotebookText,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -29,6 +39,14 @@ const modes: Mode[] = [
     icon: Sparkles,
     tone: "primary",
     path: "/bicara-ai",
+  },
+  {
+    id: "buku-belajar",
+    title: "Buku Belajar",
+    description: "Kosakata dan ungkapan tersimpan, riwayat percakapan, dan sesi ulasan",
+    icon: NotebookText,
+    tone: "success",
+    path: "/buku-belajar",
   },
   {
     id: "kosakata",

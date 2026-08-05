@@ -17,6 +17,25 @@ const GuideDetail = lazy(() => import("@/routes/GuideDetail").then((m) => ({ def
 const AiSpeakingSession = lazy(() =>
   import("@/routes/AiSpeakingSession").then((m) => ({ default: m.AiSpeakingSession })),
 );
+const VocabularyNotebook = lazy(() =>
+  import("@/routes/VocabularyNotebook").then((m) => ({ default: m.VocabularyNotebook })),
+);
+const SavedExpressions = lazy(() =>
+  import("@/routes/SavedExpressions").then((m) => ({ default: m.SavedExpressions })),
+);
+const ConversationHistoryList = lazy(() =>
+  import("@/routes/ConversationHistoryList").then((m) => ({ default: m.ConversationHistoryList })),
+);
+const ConversationHistoryDetail = lazy(() =>
+  import("@/routes/ConversationHistoryDetail").then((m) => ({ default: m.ConversationHistoryDetail })),
+);
+const SessionSummary = lazy(() =>
+  import("@/routes/SessionSummary").then((m) => ({ default: m.SessionSummary })),
+);
+const ReviewMode = lazy(() => import("@/routes/ReviewMode").then((m) => ({ default: m.ReviewMode })));
+const LearningNotebook = lazy(() =>
+  import("@/routes/LearningNotebook").then((m) => ({ default: m.LearningNotebook })),
+);
 
 function RouteFallback() {
   return (
@@ -53,6 +72,14 @@ export default function App() {
           <Route path="/panduan/:jenis" element={<GuideDetail />} />
 
           <Route path="/bicara-ai" element={<AiSpeakingSession />} />
+
+          <Route path="/kosakata-tersimpan" element={<VocabularyNotebook />} />
+          <Route path="/ekspresi-tersimpan" element={<SavedExpressions />} />
+          <Route path="/riwayat" element={<ConversationHistoryList />} />
+          <Route path="/riwayat/:id" element={<ConversationHistoryDetail />} />
+          <Route path="/ringkasan/:id" element={<SessionSummary />} />
+          <Route path="/ulas" element={<ReviewMode />} />
+          <Route path="/buku-belajar" element={<LearningNotebook />} />
         </Routes>
       </Suspense>
     </AnimatePresence>

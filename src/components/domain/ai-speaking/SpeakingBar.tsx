@@ -2,7 +2,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AudioWaveform } from "./AudioWaveform";
-import { TUTOR_NAME } from "./TutorIdentity";
+import { TUTOR_NAME } from "@/prompts/persona";
 
 interface SpeakingBarProps {
   visible: boolean;

@@ -1,38 +1,26 @@
-import type { SendMessageInput, TutorProvider, TutorReply } from "@/types/conversation";
-
-const TRANSLATION_MARKER = "→ ID:";
-
-function parseReply(raw: string): TutorReply {
-  const idx = raw.indexOf(TRANSLATION_MARKER);
-  if (idx === -1) return { text: raw.trim() };
-  return {
-    text: raw.slice(0, idx).trim(),
-    translation: raw.slice(idx + TRANSLATION_MARKER.length).trim(),
-  };
-}
+import type { AiProvider, ChatMessage } from "@/types/conversation";
 
 interface GrokApiError extends Error {
   kind: "network" | "upstream" | "quota";
 }
 
 /**
- * Real AI tutor backed by xAI's Grok API via the local proxy server
- * (server/index.js — the key never reaches the browser). Implements the
- * same `TutorProvider` interface as `MockTutorProvider`, so swapping the
- * default in `useConversation` is the only change needed anywhere.
+ * Lowest layer of the AI stack: raw text in, raw text out, via xAI's Grok
+ * API through the local proxy server (server/index.js — the API key never
+ * reaches the browser). Knows nothing about personas, scenarios, or
+ * evaluation JSON — that's services/tutorService.ts's job, one layer up.
  *
- * The interface is Promise-based (one final reply, not a stream of
- * chunks) to match `TutorProvider` exactly — so internally this consumes
- * the backend's SSE stream itself and resolves once the full reply has
- * arrived, rather than exposing partial tokens to the caller.
+ * The interface is Promise-based (one final string, not a stream of
+ * chunks): this consumes the backend's SSE stream itself and resolves
+ * once the full reply has arrived.
  */
-export class GrokTutorProvider implements TutorProvider {
-  async sendMessage({ scenario, history }: SendMessageInput): Promise<TutorReply> {
+export class GrokProvider implements AiProvider {
+  async complete(systemPrompt: string, history: ChatMessage[]): Promise<string> {
     const res = await fetch("/api/grok/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        scenario: scenario.description,
+        systemPrompt,
         messages: history.map((m) => ({ role: m.role, text: m.text })),
       }),
     });
@@ -67,7 +55,7 @@ export class GrokTutorProvider implements TutorProvider {
           const parsed = JSON.parse(jsonStr);
           // Reasoning models emit `delta.reasoning_content` (internal
           // chain-of-thought) ahead of the real `delta.content` — only the
-          // latter is the actual reply meant to be shown/spoken.
+          // latter is the actual output meant to be parsed/shown.
           const chunk = parsed?.choices?.[0]?.delta?.content;
           if (typeof chunk === "string") accumulated += chunk;
         } catch {
@@ -82,8 +70,8 @@ export class GrokTutorProvider implements TutorProvider {
       throw err;
     }
 
-    return parseReply(accumulated);
+    return accumulated;
   }
 }
 
-export const grokTutorProvider = new GrokTutorProvider();
+export const grokProvider = new GrokProvider();

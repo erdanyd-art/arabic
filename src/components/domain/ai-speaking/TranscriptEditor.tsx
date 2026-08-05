@@ -2,6 +2,7 @@ import { ArrowUp, Check, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TranscriptEditorProps {
   value: string;
@@ -37,11 +38,11 @@ export function TranscriptEditor({ value, onChange, onSend, disabled, placeholde
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder={placeholder ?? "Rekam suaramu, atau ketik di sini..."}
+          placeholder={placeholder ?? "Rekam atau ketik di sini..."}
           disabled={disabled}
           dir={value ? "rtl" : "ltr"}
           lang={value ? "ar" : undefined}
-          className="pr-16 font-arabic"
+          className={cn("pr-16", value && "font-arabic")}
           aria-label="Transkrip pesan — bisa diedit sebelum dikirim"
         />
         {value && (

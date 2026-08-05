@@ -110,18 +110,23 @@ app.post("/api/grok/chat/stream", async (req, res) => {
     return;
   }
 
-  const { messages, scenario } = req.body ?? {};
+  // This server does NOT own tutor/persona/evaluation prompt logic — it is
+  // a thin, dumb proxy. The caller (src/services/tutorService.ts, via
+  // src/prompts/*) assembles the full system prompt and sends it as-is;
+  // this route's only job is to forward it to Grok with the API key
+  // attached server-side and stream the response back untouched.
+  const { messages, systemPrompt } = req.body ?? {};
   if (!Array.isArray(messages) || messages.length === 0) {
     res.status(400).json({ error: "messages wajib diisi" });
     return;
   }
-
-  const systemText = scenario
-    ? `${SYSTEM_PROMPT}\n\nSkenario latihan saat ini: ${scenario}`
-    : SYSTEM_PROMPT;
+  if (typeof systemPrompt !== "string" || !systemPrompt.trim()) {
+    res.status(400).json({ error: "systemPrompt wajib diisi" });
+    return;
+  }
 
   const chatMessages = [
-    { role: "system", content: systemText },
+    { role: "system", content: systemPrompt },
     ...messages.map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: m.text,
@@ -141,7 +146,9 @@ app.post("/api/grok/chat/stream", async (req, res) => {
         messages: chatMessages,
         stream: true,
         temperature: 0.8,
-        max_tokens: 300,
+        // reply + full evaluation JSON needs noticeably more headroom than
+        // a plain chat reply did
+        max_tokens: 900,
       }),
     });
   } catch {

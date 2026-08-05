@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import { mockTutorProvider } from "@/services/mockTutor";
+import { grokProvider } from "@/services/grokProvider";
+import { getNextTurn } from "@/services/tutorService";
 import { createArabicUtterance, stopSpeaking as stopTts } from "@/lib/speech";
-import type { ChatMessage, Scenario, TutorProvider } from "@/types/conversation";
+import type { AiProvider, ChatMessage, Scenario } from "@/types/conversation";
 
 export type ConversationStatus = "idle" | "thinking" | "speaking" | "error";
 export type ConversationErrorKind = "network" | "quota" | "upstream" | "unknown";
@@ -16,12 +17,17 @@ function newId() {
 }
 
 /**
- * Orchestrates a scenario-based conversation against a `TutorProvider`.
- * Defaults to `mockTutorProvider` — pass a different provider (e.g. a
- * future `GeminiTutorProvider`) to swap the brain behind the exact same
- * UI with no other code changes.
+ * The "conversation service" layer: owns message history and UI-facing
+ * state, and is the only thing the UI talks to directly. It delegates all
+ * AI reasoning to `services/tutorService.ts` (which in turn talks to
+ * whichever `AiProvider` it's given) — this hook never touches a provider
+ * or a prompt string itself.
+ *
+ * Defaults to `grokProvider`; pass a different `AiProvider` (e.g.
+ * `mockProvider` for offline development) to swap the brain behind the
+ * exact same UI with no other code changes.
  */
-export function useConversation(scenario: Scenario | null, provider: TutorProvider = mockTutorProvider) {
+export function useConversation(scenario: Scenario | null, provider: AiProvider = grokProvider) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ConversationStatus>("idle");
   const [error, setError] = useState<ConversationError | null>(null);
@@ -77,7 +83,8 @@ export function useConversation(scenario: Scenario | null, provider: TutorProvid
 
       try {
         const history = [...messages, userMsg];
-        const reply = await provider.sendMessage({ scenario, history, message: trimmed });
+        const { reply, evaluation } = await getNextTurn(provider, scenario, history);
+
         const tutorMsg: ChatMessage = {
           id: newId(),
           role: "tutor",
@@ -85,7 +92,11 @@ export function useConversation(scenario: Scenario | null, provider: TutorProvid
           translation: reply.translation,
           timestamp: Date.now(),
         };
-        setMessages((prev) => [...prev, tutorMsg]);
+        setMessages((prev) => [
+          // attach the evaluation to the user message it's judging, not the tutor's reply
+          ...prev.map((m) => (m.id === userMsg.id ? { ...m, evaluation } : m)),
+          tutorMsg,
+        ]);
         setError(null);
         speak(tutorMsg.id, tutorMsg.text);
       } catch (err) {

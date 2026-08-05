@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { MicOff, RefreshCw } from "lucide-react";
+import { CheckCircle2, MicOff, RefreshCw } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
+import { Button } from "@/components/ui/button";
 import { MicButton } from "@/components/domain/ai-speaking/MicButton";
 import { AudioWaveform } from "@/components/domain/ai-speaking/AudioWaveform";
 import { ChatBubble } from "@/components/domain/ai-speaking/ChatBubble";
@@ -16,9 +17,14 @@ import { TranscriptEditor } from "@/components/domain/ai-speaking/TranscriptEdit
 import { TutorIdentity } from "@/components/domain/ai-speaking/TutorIdentity";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useConversation } from "@/hooks/useConversation";
-import { grokTutorProvider } from "@/services/grokTutor";
-import type { Scenario } from "@/types/conversation";
+import { useAppStore } from "@/store/useAppStore";
+import { SCENARIOS } from "@/data/scenarios";
+import { DIFFICULTY_LABEL, type Scenario } from "@/types/conversation";
 import { cn } from "@/lib/utils";
+import { useSessionGoals } from "@/features/goals/useSessionGoals";
+import { GoalsChecklist } from "@/features/goals/GoalsChecklist";
+import { useActiveSession } from "@/features/history/useActiveSession";
+import { finishSession } from "@/features/history/finishSession";
 
 const RECORDER_ERROR_COPY: Record<string, { title: string; description: string }> = {
   "permission-denied": {
@@ -41,21 +47,44 @@ const RECORDER_ERROR_COPY: Record<string, { title: string; description: string }
 
 export function AiSpeakingSession() {
   const navigate = useNavigate();
-  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const [searchParams] = useSearchParams();
+  const setLastAiScenario = useAppStore((s) => s.setLastAiScenario);
+
+  // Deep-link support: Home's "Today's Practice" card links here with
+  // ?scenario=<id> so tapping it jumps straight into speaking instead of
+  // back to the picker.
+  const [scenario, setScenario] = useState<Scenario | null>(() => {
+    const requested = searchParams.get("scenario");
+    return SCENARIOS.find((s) => s.id === requested) ?? null;
+  });
   const [draft, setDraft] = useState("");
   const listEndRef = useRef<HTMLDivElement>(null);
 
   const recorder = useSpeechRecognition();
-  const conversation = useConversation(scenario, grokTutorProvider);
+  const conversation = useConversation(scenario);
+  const goals = useSessionGoals(scenario ?? SCENARIOS[0], conversation.messages);
+  const activeSession = useActiveSession(scenario?.id, conversation.messages);
+
+  useEffect(() => {
+    if (scenario) setLastAiScenario(scenario.id);
+    // only track on mount / when scenario actually changes, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario?.id]);
 
   const isBusy = conversation.status === "thinking";
   const avgLevel = recorder.levels.length
     ? recorder.levels.reduce((a, b) => a + b, 0) / recorder.levels.length
     : 0;
 
+  // Scroll only when visible content actually changes height — a new
+  // message, or the typing indicator mounting — not on every status
+  // transition (thinking → speaking → idle), which used to fire 2-3
+  // redundant scrolls per turn for content that never moved.
+  const isThinking = conversation.status === "thinking";
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [conversation.messages, conversation.status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.messages.length, isThinking]);
 
   // keep the editable transcript in sync with what's being heard live —
   // never auto-sent, the user still has to press Send themselves.
@@ -88,6 +117,17 @@ export function AiSpeakingSession() {
     recorder.restart();
     setDraft("");
     setScenario(null);
+    activeSession.clear();
+  }
+
+  function handleFinishSession() {
+    if (!scenario || !activeSession.startedAt.current) return;
+    const entry = finishSession({
+      scenario,
+      messages: conversation.messages,
+      startedAt: activeSession.startedAt.current,
+    });
+    navigate(`/ringkasan/${entry.id}`);
   }
 
   // Alt+R retry, Alt+Backspace clear, Space to toggle mic (ignored while typing)
@@ -124,21 +164,38 @@ export function AiSpeakingSession() {
     <AppShell>
       <TopBar
         title="Latihan Bicara AI"
-        subtitle={scenario ? `${scenario.icon} ${scenario.title}` : "Pilih skenario untuk mulai"}
+        subtitle={
+          scenario
+            ? `${scenario.icon} ${scenario.title} · ${DIFFICULTY_LABEL[scenario.difficulty]} · ~${scenario.estimatedMinutes} mnt`
+            : "Pilih skenario untuk mulai"
+        }
         onBack={() => navigate("/pilih-mode")}
       />
 
       {scenario && (
         <div className="mb-3 flex items-center justify-between gap-2">
           <TutorIdentity size="sm" />
-          <SessionControlsBar
-            hasMessages={conversation.messages.length > 0}
-            canRetry={conversation.status === "error"}
-            onRetry={conversation.retryLast}
-            onClear={conversation.clear}
-            onNewConversation={handleNewConversation}
-            onDownload={conversation.downloadTranscript}
-          />
+          <div className="flex items-center gap-1.5">
+            <SessionControlsBar
+              hasMessages={conversation.messages.length > 0}
+              canRetry={conversation.status === "error"}
+              onRetry={conversation.retryLast}
+              onClear={conversation.clear}
+              onNewConversation={handleNewConversation}
+              onDownload={conversation.downloadTranscript}
+            />
+            {conversation.messages.length >= 2 && (
+              <Button size="sm" onClick={handleFinishSession} disabled={isBusy}>
+                <CheckCircle2 className="h-3.5 w-3.5" /> Selesai
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {scenario && (
+        <div className="mb-3">
+          <GoalsChecklist scenario={scenario} completedIds={goals.completedIds} />
         </div>
       )}
 
@@ -167,6 +224,7 @@ export function AiSpeakingSession() {
               >
                 <ChatBubble
                   message={message}
+                  scenarioId={scenario.id}
                   isSpeaking={conversation.speakingId === message.id}
                   onReplay={conversation.replay}
                   onRetry={message.failed ? conversation.retryLast : undefined}
@@ -232,7 +290,6 @@ export function AiSpeakingSession() {
               onChange={setDraft}
               onSend={handleSend}
               disabled={isBusy || recorder.state === "listening"}
-              placeholder="Rekam suaramu, atau ketik di sini..."
             />
           </div>
         </div>
