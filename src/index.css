@@ -1,9 +1,93 @@
-@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-display: "Baloo 2", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic", serif;
+
+  /* Radius scale — one deliberate scale used everywhere instead of ad hoc
+     rounded-xl/2xl mixed at random. */
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  /* Semantic color tokens (light values; overridden for .dark below).
+     Every component consumes these, never raw palette classes like
+     bg-indigo-600 directly. */
+  --color-background: oklch(0.99 0.004 90);
+  --color-foreground: oklch(0.22 0.02 270);
+  --color-surface: oklch(1 0 0);
+  --color-surface-muted: oklch(0.97 0.006 270);
+  --color-border: oklch(0.92 0.008 270);
+
+  --color-primary: oklch(0.55 0.19 275);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-primary-muted: oklch(0.94 0.03 275);
+
+  --color-accent: oklch(0.77 0.16 70);
+  --color-accent-foreground: oklch(0.2 0.03 70);
+  --color-accent-muted: oklch(0.95 0.045 80);
+
+  --color-success: oklch(0.62 0.15 155);
+  --color-success-foreground: oklch(0.99 0 0);
+  --color-success-muted: oklch(0.94 0.04 155);
+
+  --color-danger: oklch(0.6 0.19 25);
+  --color-danger-foreground: oklch(0.99 0 0);
+  --color-danger-muted: oklch(0.95 0.04 25);
+
+  --color-muted-foreground: oklch(0.52 0.015 270);
+
+  --color-role-a: oklch(0.6 0.19 350);
+  --color-role-a-foreground: oklch(0.99 0 0);
+  --color-role-b: oklch(0.58 0.16 260);
+  --color-role-b-foreground: oklch(0.99 0 0);
+
+  /* Elevation scale — resting / raised / floating, instead of shadow-sm
+     everywhere. */
+  --shadow-resting: 0 1px 2px oklch(0.2 0.02 270 / 0.05);
+  --shadow-raised: 0 4px 16px -4px oklch(0.2 0.02 270 / 0.10), 0 1px 2px oklch(0.2 0.02 270 / 0.06);
+  --shadow-floating: 0 16px 40px -12px oklch(0.2 0.02 270 / 0.22);
+}
+
+.dark {
+  --color-background: oklch(0.17 0.014 270);
+  --color-foreground: oklch(0.95 0.006 270);
+  --color-surface: oklch(0.22 0.016 270);
+  --color-surface-muted: oklch(0.26 0.018 270);
+  --color-border: oklch(0.32 0.018 270);
+
+  --color-primary: oklch(0.72 0.16 275);
+  --color-primary-foreground: oklch(0.15 0.02 275);
+  --color-primary-muted: oklch(0.3 0.05 275);
+
+  --color-accent: oklch(0.78 0.15 70);
+  --color-accent-foreground: oklch(0.18 0.03 70);
+  --color-accent-muted: oklch(0.32 0.06 75);
+
+  --color-success: oklch(0.68 0.15 155);
+  --color-success-foreground: oklch(0.15 0.03 155);
+  --color-success-muted: oklch(0.3 0.05 155);
+
+  --color-danger: oklch(0.68 0.18 25);
+  --color-danger-foreground: oklch(0.15 0.02 25);
+  --color-danger-muted: oklch(0.32 0.06 25);
+
+  --color-muted-foreground: oklch(0.68 0.014 270);
+
+  --color-role-a: oklch(0.7 0.16 350);
+  --color-role-a-foreground: oklch(0.15 0.02 350);
+  --color-role-b: oklch(0.72 0.13 260);
+  --color-role-b-foreground: oklch(0.15 0.02 260);
+
+  --shadow-resting: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-raised: 0 4px 16px -4px oklch(0 0 0 / 0.45), 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-floating: 0 16px 40px -12px oklch(0 0 0 / 0.6);
 }
 
 html,
@@ -15,9 +99,22 @@ body,
 body {
   margin: 0;
   font-family: var(--font-display);
+  background: var(--color-background);
+  color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .font-arabic {
   font-family: var(--font-arabic);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

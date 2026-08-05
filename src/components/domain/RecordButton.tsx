@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Square, Play } from "lucide-react";
+import { Mic, Play, Square } from "lucide-react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 type RecordState = "idle" | "recording" | "recorded" | "unsupported" | "denied";
+
+const STATUS_TEXT: Record<RecordState, string> = {
+  idle: "",
+  recording: "Sedang merekam suaramu",
+  recorded: "Rekaman siap diputar ulang",
+  unsupported: "Perekaman tidak didukung di perangkat ini",
+  denied: "Izin mikrofon ditolak",
+};
 
 export function RecordButton() {
   const [state, setState] = useState<RecordState>("idle");
@@ -48,45 +58,38 @@ export function RecordButton() {
     if (audioUrlRef.current) new Audio(audioUrlRef.current).play();
   }
 
-  if (state === "unsupported" || state === "denied") {
-    return (
-      <span className="text-xs text-slate-400">
-        {state === "denied" ? "Izin mikrofon ditolak" : "Rekam tidak didukung"}
-      </span>
-    );
-  }
-
-  if (state === "recording") {
-    return (
-      <button
-        type="button"
-        onClick={stopRecording}
-        className="inline-flex items-center gap-1 rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white"
-      >
-        <Square className="h-3 w-3" /> Berhenti
-      </button>
-    );
-  }
-
-  if (state === "recorded") {
-    return (
-      <button
-        type="button"
-        onClick={playRecording}
-        className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700"
-      >
-        <Play className="h-3 w-3" /> Putar rekaman
-      </button>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      onClick={startRecording}
-      className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700"
-    >
-      <Mic className="h-3 w-3" /> Latihan
-    </button>
+    <div className="inline-flex items-center gap-2">
+      <span role="status" aria-live="polite" className="sr-only">
+        {STATUS_TEXT[state]}
+      </span>
+
+      {(state === "unsupported" || state === "denied") && (
+        <span className="text-xs text-muted-foreground">{STATUS_TEXT[state]}</span>
+      )}
+
+      {state === "recording" && (
+        <Button variant="destructive" size="sm" onClick={stopRecording} className="relative">
+          <motion.span
+            className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-white"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+          <Square className="h-3 w-3" /> Berhenti
+        </Button>
+      )}
+
+      {state === "recorded" && (
+        <Button variant="secondary" size="sm" onClick={playRecording} className="text-success">
+          <Play className="h-3 w-3" /> Putar rekaman
+        </Button>
+      )}
+
+      {state === "idle" && (
+        <Button variant="secondary" size="sm" onClick={startRecording}>
+          <Mic className="h-3 w-3" /> Latihan
+        </Button>
+      )}
+    </div>
   );
 }

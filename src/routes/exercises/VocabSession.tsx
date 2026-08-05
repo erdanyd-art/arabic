@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
-import { PartyPopper } from "lucide-react";
-import { PageShell } from "@/components/ui/PageShell";
-import { SessionHeader } from "@/components/ui/SessionHeader";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { AudioButton } from "@/components/ui/AudioButton";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { AnimatePresence, motion } from "framer-motion";
+import { PartyPopper, RotateCcw, SearchX } from "lucide-react";
+import { AppShell } from "@/components/layout/AppShell";
+import { TopBar } from "@/components/layout/TopBar";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { AudioButton } from "@/components/domain/AudioButton";
+import { EmptyState } from "@/components/domain/EmptyState";
 import { vocabTopics } from "@/data/vocabTopics";
 import { useAppStore } from "@/store/useAppStore";
+import { cn } from "@/lib/utils";
 
 function shuffle<T>(items: T[]): T[] {
   const array = [...items];
@@ -34,14 +37,21 @@ export function VocabSession() {
   const choices = useMemo(() => {
     if (!word) return [];
     return shuffle([word.meaning, ...word.distractors]);
-  }, [word]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [word?.id]);
 
   if (!topic || !word) {
     return (
-      <PageShell>
-        <SessionHeader title="Kosakata" onBack={() => navigate("/kosakata/setup")} />
-        <p className="text-center text-sm text-slate-400">Topik tidak ditemukan.</p>
-      </PageShell>
+      <AppShell>
+        <TopBar title="Kosakata" onBack={() => navigate("/kosakata/setup")} />
+        <EmptyState
+          icon={SearchX}
+          title="Topik tidak ditemukan"
+          description="Sesi ini mungkin sudah dihapus atau tautannya tidak valid."
+          actionLabel="Pilih topik lain"
+          onAction={() => navigate("/kosakata/setup")}
+        />
+      </AppShell>
     );
   }
 
@@ -73,20 +83,29 @@ export function VocabSession() {
   }
 
   if (finished) {
+    const ratio = correctCount / topic.words.length;
     return (
-      <PageShell>
-        <SessionHeader title={topic.title} onBack={() => navigate("/kosakata/setup")} />
+      <AppShell>
+        <TopBar title={topic.title} onBack={() => navigate("/kosakata/setup")} />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+          <motion.div
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-accent-muted text-accent-foreground"
+          >
             <PartyPopper className="h-8 w-8" />
-          </div>
-          <p className="text-lg font-bold text-slate-800">Latihan selesai!</p>
-          <p className="text-sm text-slate-500">
-            Kamu menjawab benar {correctCount} dari {topic.words.length} kata.
+          </motion.div>
+          <p className="text-lg font-extrabold text-foreground">Latihan selesai!</p>
+          <p className="text-sm text-muted-foreground">
+            Kamu menjawab benar {correctCount} dari {topic.words.length} kata (
+            {Math.round(ratio * 100)}%).
           </p>
           <div className="mt-4 w-full space-y-3">
-            <PrimaryButton
-              tone="amber"
+            <Button
+              variant="accent"
+              size="lg"
+              className="w-full"
               onClick={() => {
                 setIndex(0);
                 setAnswered(null);
@@ -94,87 +113,86 @@ export function VocabSession() {
                 setFinished(false);
               }}
             >
-              Ulangi Topik
-            </PrimaryButton>
-            <PrimaryButton onClick={() => navigate("/")}>Kembali ke Beranda</PrimaryButton>
+              <RotateCcw className="h-4 w-4" /> Ulangi Topik
+            </Button>
+            <Button variant="secondary" size="lg" className="w-full" onClick={() => navigate("/")}>
+              Kembali ke Beranda
+            </Button>
           </div>
         </div>
-      </PageShell>
+      </AppShell>
     );
   }
 
   return (
-    <PageShell>
-      <SessionHeader
+    <AppShell>
+      <TopBar
         title={topic.title}
-        subtitle={`Kata ${index + 1} dari ${topic.words.length} · ${correctCount} selesai`}
+        subtitle={`Kata ${index + 1} dari ${topic.words.length} · ${correctCount} benar`}
         onBack={() => navigate("/kosakata/setup")}
       />
       <div className="mb-6">
-        <ProgressBar progress={(index + 1) / topic.words.length} />
+        <Progress value={((index + 1) / topic.words.length) * 100} />
       </div>
 
-      <motion.div
-        key={word.id}
-        initial={{ opacity: 0, x: 12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.2 }}
-        className="rounded-2xl bg-white p-6 shadow-sm"
-      >
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex items-center gap-3">
-            <p className="font-arabic text-4xl text-slate-900">{word.arabic}</p>
-            <AudioButton text={word.arabic} />
-          </div>
-          <p className="text-sm italic text-amber-600">{word.transliteration}</p>
-        </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={word.id}
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Card className="p-6">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex items-center gap-3">
+                <p lang="ar" className="font-arabic text-4xl text-foreground">
+                  {word.arabic}
+                </p>
+                <AudioButton text={word.arabic} />
+              </div>
+              <p className="text-sm italic text-accent-foreground">{word.transliteration}</p>
+            </div>
 
-        <p className="mb-3 mt-6 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Apa arti kata ini?
-        </p>
-        <div className="space-y-3">
-          {choices.map((choice) => {
-            const isCorrect = choice === word.meaning;
-            const isChosen = choice === answered;
-            const showState = answered !== null;
-            return (
-              <button
-                key={choice}
-                type="button"
-                onClick={() => handleAnswer(choice)}
-                className={`w-full rounded-xl border-2 px-4 py-3 text-left text-sm font-medium transition-colors ${
-                  showState && isCorrect
-                    ? "border-amber-300 bg-amber-50 text-amber-700"
-                    : showState && isChosen
-                      ? "border-red-200 bg-red-50 text-red-600"
-                      : "border-slate-200 text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                {choice}
-              </button>
-            );
-          })}
-        </div>
-      </motion.div>
+            <p className="mb-3 mt-6 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Apa arti kata ini?
+            </p>
+            <div className="space-y-3">
+              {choices.map((choice) => {
+                const isCorrect = choice === word.meaning;
+                const isChosen = choice === answered;
+                const showState = answered !== null;
+                return (
+                  <button
+                    key={choice}
+                    type="button"
+                    onClick={() => handleAnswer(choice)}
+                    className={cn(
+                      "w-full rounded-md border-2 px-4 py-3 text-left text-sm font-medium transition-colors",
+                      showState && isCorrect
+                        ? "border-success bg-success-muted text-success"
+                        : showState && isChosen
+                          ? "border-danger bg-danger-muted text-danger"
+                          : "border-border text-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {choice}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+        </motion.div>
+      </AnimatePresence>
 
       <div className="mt-6 flex gap-3">
-        <button
-          type="button"
-          onClick={handlePrev}
-          disabled={index === 0}
-          className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500 disabled:opacity-40"
-        >
+        <Button variant="secondary" size="lg" className="flex-1" onClick={handlePrev} disabled={index === 0}>
           ← Sebelumnya
-        </button>
-        <button
-          type="button"
-          onClick={handleNext}
-          disabled={!answered}
-          className="flex-1 rounded-2xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white disabled:opacity-40"
-        >
+        </Button>
+        <Button variant="accent" size="lg" className="flex-1" onClick={handleNext} disabled={!answered}>
           Berikutnya →
-        </button>
+        </Button>
       </div>
-    </PageShell>
+    </AppShell>
   );
 }

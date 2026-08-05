@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Pause, Play, Repeat, RotateCcw, Square } from "lucide-react";
-import { PageShell } from "@/components/ui/PageShell";
-import { SessionHeader } from "@/components/ui/SessionHeader";
+import { Languages, Pause, Play, Repeat, RotateCcw, SearchX, Square } from "lucide-react";
+import { motion } from "framer-motion";
+import { AppShell } from "@/components/layout/AppShell";
+import { TopBar } from "@/components/layout/TopBar";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/domain/EmptyState";
 import { sentenceTopics } from "@/data/sentenceTopics";
 import { useAppStore } from "@/store/useAppStore";
 import { stopSpeaking } from "@/lib/speech";
+import { cn } from "@/lib/utils";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
 
@@ -56,75 +61,85 @@ export function SentenceSession() {
 
   if (!topic) {
     return (
-      <PageShell>
-        <SessionHeader title="Kalimat" onBack={() => navigate("/kalimat/setup")} />
-        <p className="text-center text-sm text-slate-400">Topik tidak ditemukan.</p>
-      </PageShell>
+      <AppShell>
+        <TopBar title="Kalimat" onBack={() => navigate("/kalimat/setup")} />
+        <EmptyState
+          icon={SearchX}
+          title="Topik tidak ditemukan"
+          description="Sesi ini mungkin sudah dihapus atau tautannya tidak valid."
+          actionLabel="Pilih topik lain"
+          onAction={() => navigate("/kalimat/setup")}
+        />
+      </AppShell>
     );
   }
 
   return (
-    <PageShell>
-      <SessionHeader title={topic.title} onBack={() => navigate("/kalimat/setup")} />
+    <AppShell>
+      <TopBar title={topic.title} onBack={() => navigate("/kalimat/setup")} />
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-3 shadow-sm">
+      <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-3">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            aria-label="Ulangi dari awal"
             onClick={() => {
               stopSpeaking();
               setIsPlaying(false);
               setActiveIndex(0);
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-            aria-label="Ulangi dari awal"
           >
             <RotateCcw className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            aria-label="Berhenti"
             onClick={() => {
               stopSpeaking();
               setIsPlaying(false);
             }}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-            aria-label="Berhenti"
           >
             <Square className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPlaying((playing) => !playing)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-600 text-white"
+          </Button>
+          <Button
+            size="icon"
             aria-label={isPlaying ? "Jeda" : "Putar"}
+            onClick={() => setIsPlaying((playing) => !playing)}
           >
             {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => setLoop((l) => !l)}
-            className={`flex h-9 w-9 items-center justify-center rounded-full ${loop ? "bg-indigo-100 text-indigo-600" : "bg-slate-100 text-slate-500"}`}
+          </Button>
+          <Button
+            variant={loop ? "primary" : "secondary"}
+            size="icon-sm"
             aria-label="Ulang otomatis"
+            aria-pressed={loop}
+            onClick={() => setLoop((l) => !l)}
           >
             <Repeat className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
-        <button
-          type="button"
+        <Button
+          variant={showTranslation ? "primary" : "secondary"}
+          size="sm"
+          aria-pressed={showTranslation}
           onClick={() => setShowTranslation((v) => !v)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${showTranslation ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"}`}
         >
-          Terjemahkan
-        </button>
-      </div>
+          <Languages className="h-3.5 w-3.5" /> Terjemahkan
+        </Button>
+      </Card>
 
-      <div className="mb-5 flex items-center justify-center gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+      <div className="mb-5 flex items-center justify-center gap-1 rounded-md bg-surface-muted p-1 text-xs font-semibold">
         {SPEEDS.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setSpeed(s)}
-            className={`rounded-lg px-2.5 py-1.5 ${speed === s ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400"}`}
+            className={cn(
+              "rounded-xs px-2.5 py-1.5 transition-colors",
+              speed === s ? "bg-surface text-primary shadow-resting" : "text-muted-foreground",
+            )}
           >
             {s}x
           </button>
@@ -133,27 +148,31 @@ export function SentenceSession() {
 
       <div className="space-y-3">
         {topic.sentences.map((sentence, i) => (
-          <button
+          <motion.button
             key={sentence.id}
             type="button"
+            layout
             onClick={() => {
               setActiveIndex(i);
               setIsPlaying(true);
             }}
-            className={`w-full rounded-2xl border-2 p-5 text-center transition-colors ${
-              i === activeIndex ? "border-indigo-300 bg-indigo-50" : "border-transparent bg-white"
-            }`}
+            className={cn(
+              "w-full rounded-lg border-2 p-5 text-center shadow-resting transition-colors",
+              i === activeIndex ? "border-primary bg-primary-muted" : "border-transparent bg-surface",
+            )}
           >
-            <p className="mb-2 text-xs font-semibold text-slate-400">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">
               {String(i + 1).padStart(2, "0")}
             </p>
-            <p className="font-arabic text-2xl leading-relaxed text-slate-900">{sentence.arabic}</p>
+            <p lang="ar" className="font-arabic text-2xl leading-relaxed text-foreground">
+              {sentence.arabic}
+            </p>
             {showTranslation && (
-              <p className="mt-2 text-sm text-slate-500">{sentence.translation}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{sentence.translation}</p>
             )}
-          </button>
+          </motion.button>
         ))}
       </div>
-    </PageShell>
+    </AppShell>
   );
 }

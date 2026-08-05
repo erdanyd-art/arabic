@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Home, Languages, Play } from "lucide-react";
-import { PageShell } from "@/components/ui/PageShell";
+import { Languages, Play, SearchX, Volume2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { AppShell } from "@/components/layout/AppShell";
+import { TopBar } from "@/components/layout/TopBar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { EmptyState } from "@/components/domain/EmptyState";
+import { RecordButton } from "@/components/domain/RecordButton";
 import { conversationTopics } from "@/data/conversationTopics";
 import { speakArabic } from "@/lib/speech";
-import { RecordButton } from "@/components/ui/RecordButton";
 import { useAppStore } from "@/store/useAppStore";
+import { cn } from "@/lib/utils";
 
 export function ConversationSession() {
   const { topicId } = useParams();
@@ -27,9 +34,16 @@ export function ConversationSession() {
 
   if (!topic) {
     return (
-      <PageShell>
-        <p className="text-center text-sm text-slate-400">Situasi tidak ditemukan.</p>
-      </PageShell>
+      <AppShell>
+        <TopBar title="Percakapan" onBack={() => navigate("/percakapan/setup")} />
+        <EmptyState
+          icon={SearchX}
+          title="Situasi tidak ditemukan"
+          description="Sesi ini mungkin sudah dihapus atau tautannya tidak valid."
+          actionLabel="Pilih situasi lain"
+          onAction={() => navigate("/percakapan/setup")}
+        />
+      </AppShell>
     );
   }
 
@@ -47,102 +61,97 @@ export function ConversationSession() {
   }
 
   return (
-    <PageShell>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/percakapan/setup")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm"
-          aria-label="Kembali"
-        >
-          ←
-        </button>
-        <div className="min-w-0 flex-1 text-center">
-          <p className="truncate font-semibold text-slate-800">
-            {topic.title} <span className="font-arabic text-slate-400">/ {topic.arabicTitle}</span>
-          </p>
-          <p className="truncate text-xs text-slate-500">
-            {roleA.arabicLabel} / {roleA.label} · {roleB.arabicLabel} / {roleB.label} ·{" "}
-            {doneCount}/{topic.lines.length} selesai
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowTranslation((v) => !v)}
-          className={`flex h-9 items-center gap-1 rounded-full px-3 text-xs font-semibold shrink-0 ${showTranslation ? "bg-indigo-600 text-white" : "bg-white text-slate-500 shadow-sm"}`}
-        >
-          <Languages className="h-3.5 w-3.5" /> Terjemahkan
-        </button>
-        <button
-          type="button"
-          onClick={playAll}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
-          aria-label="Putar semua"
-        >
-          <Play className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm"
-          aria-label="Beranda"
-        >
-          <Home className="h-4 w-4" />
-        </button>
+    <AppShell>
+      <TopBar
+        title={topic.title}
+        subtitle={`${roleA.label} · ${roleB.label} · ${doneCount}/${topic.lines.length} selesai`}
+        onBack={() => navigate("/percakapan/setup")}
+        actions={
+          <>
+            <Button
+              variant={showTranslation ? "primary" : "secondary"}
+              size="icon"
+              aria-pressed={showTranslation}
+              aria-label="Terjemahkan"
+              onClick={() => setShowTranslation((v) => !v)}
+            >
+              <Languages className="h-4 w-4" />
+            </Button>
+            <Button size="icon" aria-label="Putar semua" onClick={playAll}>
+              <Play className="h-4 w-4" />
+            </Button>
+          </>
+        }
+      />
+
+      <div className="mb-6">
+        <Progress value={(doneCount / topic.lines.length) * 100} />
       </div>
 
       <div className="space-y-4 pb-4">
-        {topic.lines.map((line) => {
+        {topic.lines.map((line, i) => {
           const isRoleA = line.roleId === roleA.id;
           const role = isRoleA ? roleA : roleB;
           return (
-            <div key={line.id} className={`flex flex-col ${isRoleA ? "items-end" : "items-start"}`}>
+            <motion.div
+              key={line.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className={cn("flex flex-col", isRoleA ? "items-end" : "items-start")}
+            >
               <p
-                className={`mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide ${isRoleA ? "text-pink-500" : "text-indigo-500"}`}
+                className={cn(
+                  "mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide",
+                  isRoleA ? "text-role-a" : "text-role-b",
+                )}
               >
-                {role.arabicLabel} / {role.label}
+                {role.label}
               </p>
               <div className="flex items-end gap-2">
                 {!isRoleA && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">
-                    {role.label[0]}
-                  </div>
+                  <Avatar>
+                    <AvatarFallback className="bg-role-b/15 text-role-b">{role.label[0]}</AvatarFallback>
+                  </Avatar>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    isRoleA ? "bg-pink-500 text-white" : "bg-white text-slate-800 shadow-sm"
-                  }`}
+                  className={cn(
+                    "max-w-[78%] rounded-lg px-4 py-3 shadow-resting",
+                    isRoleA ? "bg-role-a text-role-a-foreground" : "bg-surface text-foreground",
+                  )}
                 >
-                  <p className="font-arabic text-lg leading-relaxed">{line.arabic}</p>
+                  <p lang="ar" className="font-arabic text-lg leading-relaxed">
+                    {line.arabic}
+                  </p>
                   {showTranslation && (
-                    <p className={`mt-1 text-xs ${isRoleA ? "text-pink-100" : "text-slate-400"}`}>
+                    <p className={cn("mt-1 text-xs", isRoleA ? "opacity-80" : "text-muted-foreground")}>
                       {line.translation}
                     </p>
                   )}
                 </div>
                 {isRoleA && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-100 text-xs font-bold text-pink-600">
-                    {role.label[0]}
-                  </div>
+                  <Avatar>
+                    <AvatarFallback className="bg-role-a/15 text-role-a">{role.label[0]}</AvatarFallback>
+                  </Avatar>
                 )}
               </div>
-              <div className={`mt-1.5 flex gap-2 ${isRoleA ? "pr-10" : "pl-10"}`}>
-                <button
-                  type="button"
+              <div className={cn("mt-1.5 flex items-center gap-2", isRoleA ? "pr-10" : "pl-10")}>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     speakArabic(line.arabic);
                     markListened(line.id);
                   }}
-                  className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600"
                 >
-                  🔊 Dengar
-                </button>
+                  <Volume2 className="h-3 w-3" /> Dengar
+                </Button>
                 <RecordButton />
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </PageShell>
+    </AppShell>
   );
 }

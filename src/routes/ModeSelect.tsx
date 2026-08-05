@@ -1,16 +1,25 @@
 import { BookA, MessageCircle, MessagesSquare, BookOpen, Compass, MapPin, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PageShell } from "@/components/ui/PageShell";
-import { SessionHeader } from "@/components/ui/SessionHeader";
+import { motion } from "framer-motion";
+import { AppShell } from "@/components/layout/AppShell";
+import { TopBar } from "@/components/layout/TopBar";
+import { Card } from "@/components/ui/card";
 
 interface Mode {
   id: string;
   title: string;
   description: string;
   icon: LucideIcon;
-  iconClass: string;
+  tone: "primary" | "accent" | "success" | "danger";
   path: string;
 }
+
+const TONE_CLASS: Record<Mode["tone"], string> = {
+  primary: "bg-primary-muted text-primary",
+  accent: "bg-accent-muted text-accent-foreground",
+  success: "bg-success-muted text-success",
+  danger: "bg-role-a/15 text-role-a",
+};
 
 const modes: Mode[] = [
   {
@@ -18,7 +27,7 @@ const modes: Mode[] = [
     title: "Kosakata",
     description: "Pilih topik kosakata Arab, tebak arti, dan latih pengucapan kata per kata",
     icon: BookA,
-    iconClass: "bg-amber-100 text-amber-600",
+    tone: "accent",
     path: "/kosakata/setup",
   },
   {
@@ -26,7 +35,7 @@ const modes: Mode[] = [
     title: "Kalimat",
     description: "Latihan pengucapan kalimat dengan topik pilihan atau teks sendiri",
     icon: MessageCircle,
-    iconClass: "bg-indigo-100 text-indigo-600",
+    tone: "primary",
     path: "/kalimat/setup",
   },
   {
@@ -34,7 +43,7 @@ const modes: Mode[] = [
     title: "Percakapan",
     description: "Latihan dialog dua orang dalam berbagai situasi sehari-hari",
     icon: MessagesSquare,
-    iconClass: "bg-pink-100 text-pink-600",
+    tone: "danger",
     path: "/percakapan/setup",
   },
   {
@@ -42,7 +51,7 @@ const modes: Mode[] = [
     title: "Baca Al-Quran",
     description: "Telusuri 114 surah lengkap dengan terjemahan Indonesia",
     icon: BookOpen,
-    iconClass: "bg-emerald-100 text-emerald-600",
+    tone: "success",
     path: "/quran",
   },
   {
@@ -50,7 +59,7 @@ const modes: Mode[] = [
     title: "Panduan Umrah",
     description: "Rukun, sunnah, tahapan, dan doa seputar umrah",
     icon: Compass,
-    iconClass: "bg-sky-100 text-sky-600",
+    tone: "primary",
     path: "/panduan/umrah",
   },
   {
@@ -58,7 +67,7 @@ const modes: Mode[] = [
     title: "Panduan Haji",
     description: "Rukun, tahapan, dan doa seputar ibadah haji",
     icon: MapPin,
-    iconClass: "bg-purple-100 text-purple-600",
+    tone: "accent",
     path: "/panduan/haji",
   },
 ];
@@ -66,27 +75,37 @@ const modes: Mode[] = [
 export function ModeSelect() {
   const navigate = useNavigate();
   return (
-    <PageShell>
-      <SessionHeader title="Pilih Jenis Latihan" onBack={() => navigate("/")} />
-      <p className="mb-5 text-center text-sm text-slate-500">Mau latihan apa hari ini?</p>
+    <AppShell>
+      <TopBar title="Pilih Jenis Latihan" onBack={() => navigate("/")} />
+      <p className="mb-5 text-center text-sm text-muted-foreground">Mau latihan apa hari ini?</p>
       <div className="space-y-3">
-        {modes.map((mode) => (
-          <button
+        {modes.map((mode, i) => (
+          <motion.div
             key={mode.id}
-            type="button"
-            onClick={() => navigate(mode.path)}
-            className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm transition-transform hover:-translate-y-0.5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.04, duration: 0.25 }}
           >
-            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${mode.iconClass}`}>
-              <mode.icon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-semibold text-slate-800">{mode.title}</p>
-              <p className="text-xs text-slate-500">{mode.description}</p>
-            </div>
-          </button>
+            <Card
+              className="cursor-pointer p-4 transition-transform hover:-translate-y-0.5 hover:shadow-raised"
+              onClick={() => navigate(mode.path)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && navigate(mode.path)}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${TONE_CLASS[mode.tone]}`}>
+                  <mode.icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-foreground">{mode.title}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{mode.description}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         ))}
       </div>
-    </PageShell>
+    </AppShell>
   );
 }
