@@ -3,7 +3,7 @@ import { Mic, Play, Square } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-type RecordState = "idle" | "recording" | "recorded" | "unsupported" | "denied";
+type RecordState = "idle" | "recording" | "recorded" | "unsupported" | "denied" | "playback-error";
 
 const STATUS_TEXT: Record<RecordState, string> = {
   idle: "",
@@ -11,7 +11,21 @@ const STATUS_TEXT: Record<RecordState, string> = {
   recorded: "Rekaman siap diputar ulang",
   unsupported: "Perekaman tidak didukung di perangkat ini",
   denied: "Izin mikrofon ditolak",
+  "playback-error": "Rekaman tidak bisa diputar di browser ini",
 };
+
+// Browsers disagree on which audio container MediaRecorder can produce
+// (Chrome/Firefox default to webm/opus, Safari only supports mp4/aac).
+// Ask for the first container the browser actually supports instead of
+// assuming webm, and read the *real* format back off the recorder when
+// building the Blob — mislabeling the Blob's MIME type is what silently
+// breaks playback.
+const CANDIDATE_MIME_TYPES = ["audio/webm", "audio/mp4", "audio/ogg"];
+
+function pickSupportedMimeType(): string | undefined {
+  if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return undefined;
+  return CANDIDATE_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+}
 
 export function RecordButton() {
   const [state, setState] = useState<RecordState>("idle");
@@ -27,19 +41,32 @@ export function RecordButton() {
   }, []);
 
   async function startRecording() {
-    if (!navigator.mediaDevices?.getUserMedia) {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setState("unsupported");
       return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const preferredType = pickSupportedMimeType();
+      const recorder = preferredType
+        ? new MediaRecorder(stream, { mimeType: preferredType })
+        : new MediaRecorder(stream);
       chunksRef.current = [];
-      recorder.ondataavailable = (event) => chunksRef.current.push(event.data);
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        audioUrlRef.current = URL.createObjectURL(blob);
         stream.getTracks().forEach((track) => track.stop());
+        if (chunksRef.current.length === 0) {
+          setState("playback-error");
+          return;
+        }
+        // recorder.mimeType is the browser's actual negotiated format —
+        // using anything else here (like a hardcoded "audio/webm") makes
+        // the Blob lie about its own encoding and playback fails silently.
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || preferredType });
+        if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = URL.createObjectURL(blob);
         setState("recorded");
       };
       recorder.start();
@@ -55,7 +82,9 @@ export function RecordButton() {
   }
 
   function playRecording() {
-    if (audioUrlRef.current) new Audio(audioUrlRef.current).play();
+    if (!audioUrlRef.current) return;
+    const audio = new Audio(audioUrlRef.current);
+    audio.play().catch(() => setState("playback-error"));
   }
 
   return (
@@ -64,7 +93,7 @@ export function RecordButton() {
         {STATUS_TEXT[state]}
       </span>
 
-      {(state === "unsupported" || state === "denied") && (
+      {(state === "unsupported" || state === "denied" || state === "playback-error") && (
         <span className="text-xs text-muted-foreground">{STATUS_TEXT[state]}</span>
       )}
 
@@ -85,9 +114,9 @@ export function RecordButton() {
         </Button>
       )}
 
-      {state === "idle" && (
+      {(state === "idle" || state === "playback-error") && (
         <Button variant="secondary" size="sm" onClick={startRecording}>
-          <Mic className="h-3 w-3" /> Latihan
+          <Mic className="h-3 w-3" /> {state === "playback-error" ? "Rekam ulang" : "Latihan"}
         </Button>
       )}
     </div>

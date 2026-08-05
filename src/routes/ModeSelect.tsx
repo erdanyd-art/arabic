@@ -1,4 +1,4 @@
-import { BookA, MessageCircle, MessagesSquare, BookOpen, Compass, MapPin, type LucideIcon } from "lucide-react";
+import { BookA, MessageCircle, MessagesSquare, BookOpen, Compass, MapPin, Sparkles, type LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -22,6 +22,14 @@ const TONE_CLASS: Record<Mode["tone"], string> = {
 };
 
 const modes: Mode[] = [
+  {
+    id: "bicara-ai",
+    title: "Latihan Bicara AI",
+    description: "Ngobrol bebas dalam Bahasa Arab dengan lawan bicara AI secara real-time",
+    icon: Sparkles,
+    tone: "primary",
+    path: "/bicara-ai",
+  },
   {
     id: "kosakata",
     title: "Kosakata",

@@ -2,6 +2,7 @@ import { Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { createArabicUtterance } from "@/lib/speech";
 
 interface AudioButtonProps {
   text: string;
@@ -18,9 +19,7 @@ export function AudioButton({ text, size = "md", className }: AudioButtonProps) 
   function handleClick() {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "ar-SA";
-    utterance.rate = 0.85;
+    const utterance = createArabicUtterance(text);
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);

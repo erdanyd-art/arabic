@@ -14,6 +14,9 @@ const ConversationSession = lazy(() => import("@/routes/exercises/ConversationSe
 const QuranList = lazy(() => import("@/routes/QuranList").then((m) => ({ default: m.QuranList })));
 const QuranReader = lazy(() => import("@/routes/QuranReader").then((m) => ({ default: m.QuranReader })));
 const GuideDetail = lazy(() => import("@/routes/GuideDetail").then((m) => ({ default: m.GuideDetail })));
+const AiSpeakingSession = lazy(() =>
+  import("@/routes/AiSpeakingSession").then((m) => ({ default: m.AiSpeakingSession })),
+);
 
 function RouteFallback() {
   return (
@@ -48,6 +51,8 @@ export default function App() {
           <Route path="/quran/:surahNumber" element={<QuranReader />} />
 
           <Route path="/panduan/:jenis" element={<GuideDetail />} />
+
+          <Route path="/bicara-ai" element={<AiSpeakingSession />} />
         </Routes>
       </Suspense>
     </AnimatePresence>

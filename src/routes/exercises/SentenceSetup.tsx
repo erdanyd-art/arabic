@@ -15,6 +15,7 @@ export function SentenceSetup() {
       customPlaceholder='Tulis kalimat atau topik kalimat yang ingin dilatih, mis. "cerita liburan sekolah".'
       sessionBasePath="/kalimat/sesi"
       allowRandomPick
+      buildSessionPath={(topicId) => `/kalimat/sesi/${topicId}?voice=${wanita ? "wanita" : "pria"}`}
       extraOptions={
         <>
           <OptionSwitchRow

@@ -32,6 +32,8 @@ interface ExerciseSetupScreenProps {
   sessionBasePath: string;
   allowRandomPick?: boolean;
   extraOptions?: ReactNode;
+  /** Override how the session URL is built (e.g. to append voice/dialect query params from `extraOptions` state). Defaults to `${sessionBasePath}/${topicId}`. */
+  buildSessionPath?: (topicId: string) => string;
 }
 
 export function ExerciseSetupScreen({
@@ -44,6 +46,7 @@ export function ExerciseSetupScreen({
   sessionBasePath,
   allowRandomPick,
   extraOptions,
+  buildSessionPath,
 }: ExerciseSetupScreenProps) {
   const navigate = useNavigate();
   const [level, setLevel] = useState<Level>("pemula");
@@ -51,10 +54,11 @@ export function ExerciseSetupScreen({
   const { mutateAsync, isPending } = useGenerateSession();
 
   const filtered = topics.filter((topic) => topic.level === level);
+  const resolvePath = buildSessionPath ?? ((topicId: string) => `${sessionBasePath}/${topicId}`);
 
   async function startWithTopic(topicId: string) {
     const result = await mutateAsync({ topicId });
-    navigate(`${sessionBasePath}/${result.topicId}`);
+    navigate(resolvePath(result.topicId));
   }
 
   async function startCustom(prompt: string) {
@@ -67,7 +71,7 @@ export function ExerciseSetupScreen({
     toast.info("Pembuatan topik AI dari teks bebas segera hadir.", {
       description: `Untuk saat ini kami pilihkan topik "${fallback.title}" agar kamu tetap bisa berlatih "${prompt}" nanti.`,
     });
-    navigate(`${sessionBasePath}/${fallback.id}`);
+    navigate(resolvePath(fallback.id));
   }
 
   function pickRandom() {

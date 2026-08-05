@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Languages, Pause, Play, Repeat, RotateCcw, SearchX, Square } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { TopBar } from "@/components/layout/TopBar";
 import { Card } from "@/components/ui/card";
@@ -9,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/domain/EmptyState";
 import { sentenceTopics } from "@/data/sentenceTopics";
 import { useAppStore } from "@/store/useAppStore";
-import { stopSpeaking } from "@/lib/speech";
+import { createArabicUtterance, getArabicVoiceAvailability, stopSpeaking, whenVoicesReady } from "@/lib/speech";
+import type { VoiceGender } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
@@ -17,6 +19,8 @@ const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
 export function SentenceSession() {
   const { topicId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const voiceGender: VoiceGender = searchParams.get("voice") === "wanita" ? "wanita" : "pria";
   const addHistoryEntry = useAppStore((state) => state.addHistoryEntry);
   const topic = sentenceTopics.find((item) => item.id === topicId);
 
@@ -26,17 +30,39 @@ export function SentenceSession() {
   const [loop, setLoop] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const loggedRef = useRef(false);
+  const voiceWarnedRef = useRef(false);
 
   useEffect(() => stopSpeaking, []);
+
+  // Web Speech API doesn't guarantee a distinct male/female Arabic voice is
+  // installed — tell the user honestly instead of letting the toggle look
+  // broken when it silently can't do anything.
+  useEffect(() => {
+    voiceWarnedRef.current = false;
+    whenVoicesReady().then(() => {
+      if (voiceWarnedRef.current) return;
+      const availability = getArabicVoiceAvailability(voiceGender);
+      if (availability.honored) return;
+      voiceWarnedRef.current = true;
+      if (!availability.hasVoiceAtAll) {
+        toast.warning("Tidak ada suara Arab di perangkat ini", {
+          description: "Browser akan memakai suara default, pengucapan mungkin kurang akurat.",
+        });
+      } else if (availability.isPlatformLimit) {
+        toast.info("Suara pria/wanita belum tersedia di perangkat ini", {
+          description:
+            "Perangkatmu cuma punya satu suara Arab bawaan. Tambah voice lain lewat Pengaturan > Aksesibilitas > Konten Ucapan untuk mendengar bedanya.",
+        });
+      }
+    });
+  }, [voiceGender]);
 
   useEffect(() => {
     if (!isPlaying || !topic) return;
     const sentence = topic.sentences[activeIndex];
     if (!sentence || typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
-    const utterance = new SpeechSynthesisUtterance(sentence.arabic);
-    utterance.lang = "ar-SA";
-    utterance.rate = speed;
+    const utterance = createArabicUtterance(sentence.arabic, { rate: speed, gender: voiceGender });
     utterance.onend = () => {
       if (activeIndex + 1 < topic.sentences.length) {
         setActiveIndex((i) => i + 1);
@@ -57,7 +83,7 @@ export function SentenceSession() {
 
     return () => window.speechSynthesis.cancel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, activeIndex, speed, topic, loop]);
+  }, [isPlaying, activeIndex, speed, topic, loop, voiceGender]);
 
   if (!topic) {
     return (
