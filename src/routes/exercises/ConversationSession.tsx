@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/domain/EmptyState";
-import { RecordButton } from "@/components/domain/RecordButton";
+import { DialoguePracticeButton } from "@/features/dialogue-practice/DialoguePracticeButton";
 import { conversationTopics } from "@/data/conversationTopics";
 import { speakArabic } from "@/lib/speech";
 import { useAppStore } from "@/store/useAppStore";
@@ -146,7 +146,7 @@ export function ConversationSession() {
                 >
                   <Volume2 className="h-3 w-3" /> Dengar
                 </Button>
-                <RecordButton />
+                <DialoguePracticeButton targetText={line.arabic} />
               </div>
             </motion.div>
           );
