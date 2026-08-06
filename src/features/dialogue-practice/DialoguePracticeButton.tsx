@@ -27,16 +27,19 @@ interface DialoguePracticeButtonProps {
 export function DialoguePracticeButton({ targetText }: DialoguePracticeButtonProps) {
   const recognizer = useSpeechRecognition();
   const [result, setResult] = useState<PronunciationScore | null>(null);
+  const [heardText, setHeardText] = useState("");
 
   async function handlePress() {
     if (recognizer.state === "idle" || recognizer.state === "error" || recognizer.state === "finished") {
       setResult(null);
+      setHeardText("");
       recognizer.resetError();
       await recognizer.start();
       return;
     }
     if (recognizer.state === "listening") {
       const transcript = await recognizer.stop();
+      setHeardText(transcript);
       setResult(scorePronunciation(targetText, transcript));
     }
   }
@@ -76,25 +79,39 @@ export function DialoguePracticeButton({ targetText }: DialoguePracticeButtonPro
       )}
 
       {result && (
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-          <span
-            className={cn(
-              "mr-1 font-semibold",
-              result.score >= 0.8 ? "text-success" : result.score >= 0.5 ? "text-accent" : "text-danger",
-            )}
-          >
-            {result.matchedCount}/{result.totalCount}
-          </span>
-          {result.words.map((w, i) => (
+        <div className="max-w-xs space-y-1.5 rounded-md bg-surface-muted px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs">
             <span
-              key={i}
-              lang="ar"
-              dir="rtl"
-              className={cn("font-arabic", w.matched ? "text-success" : "text-muted-foreground line-through")}
+              className={cn(
+                "font-semibold",
+                result.score >= 0.8 ? "text-success" : result.score >= 0.5 ? "text-accent" : "text-danger",
+              )}
             >
-              {w.word}
+              {result.matchedCount}/{result.totalCount} kata
             </span>
-          ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            {result.words.map((w, i) => (
+              <span
+                key={i}
+                lang="ar"
+                dir="rtl"
+                className={cn("font-arabic text-sm", w.matched ? "text-success" : "text-danger line-through")}
+              >
+                {w.word}
+              </span>
+            ))}
+          </div>
+
+          {/* What the recognizer actually heard — without this, a low score is unexplainable noise instead of something the learner can see and judge for themselves. */}
+          {heardText.trim() ? (
+            <p className="text-[11px] text-muted-foreground">
+              Terdengar: <span lang="ar" dir="rtl" className="font-arabic">{heardText}</span>
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">Tidak ada suara yang terdengar.</p>
+          )}
         </div>
       )}
     </div>
